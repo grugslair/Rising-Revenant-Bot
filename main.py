@@ -7,6 +7,7 @@ from starknet_py.net.client_models import Call
 import requests
 import math
 import os
+import json
 
 
 PRIVATE_KEY = "0x1800000000300000180000000000030000000000003006001800006600"
@@ -19,7 +20,7 @@ TORII_URL = 'http://localhost:8080/graphql'
 
 DISCORD_CHANNEL_WEBHOOK = 'https://discord.com/api/webhooks/1218511459714207784/xqsESHV8WNeU_l4gm2wevj3h1kclNUWxpU1jPIBSZIn47f-bTUURoCwypzrtLw0FHSGh'
 
-BLOCK_CHECK_INTERVAL = 5  
+BLOCK_CHECK_INTERVAL = 2  
 LOOP_SECONDS_INTERVAL = 10
 
 
@@ -338,7 +339,7 @@ def fetch_latest_game_number() -> int:
         return -1
 
 def send_discord_message(webhook_url, message):
-    return
+    
     data = {'content': message}
     response = requests.post(webhook_url, json=data)
     return response.text
@@ -352,6 +353,43 @@ def clear_console():
         os.system('clear')
 
 
+def send_webhook(webhook_url, content, title=None, description=None, color=None, fields=None, footer=None, thumbnail=None, image=None):
+    """
+    Sends a webhook to the specified URL with an embedded message.
+
+    Args:
+        webhook_url (str): The URL of the webhook.
+        content (str): The content of the message.
+        title (str, optional): The title of the embed. Defaults to None.
+        description (str, optional): The description of the embed. Defaults to None.
+        color (int, optional): The color of the embed. Defaults to None.
+        fields (list, optional): A list of fields to include in the embed. Defaults to None.
+        footer (dict, optional): A dictionary containing the footer text and icon URL. Defaults to None.
+        thumbnail (dict, optional): A dictionary containing the thumbnail URL and height and width. Defaults to None.
+        image (dict, optional): A dictionary containing the image URL and height and width. Defaults to None.
+    """
+    # Create the embed object
+    embed = {
+        "title": title,
+        "description": description,
+        "color": color,
+        "fields": fields,
+        "footer": footer,
+        "thumbnail": thumbnail,
+        "image": image
+    }
+
+    # Remove any None values from the embed
+    embed = {k: v for k, v in embed.items() if v is not None}
+
+    # Create the JSON payload
+    payload = {
+        "content": content,
+        "embeds": [embed]
+    }
+
+    # Send the webhook
+    requests.post(webhook_url, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
 
 
 
@@ -398,7 +436,7 @@ async def main():
     send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"Rising revenant bot starting...")
 
     while True:
-        send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"----------------------------------\n\n\n--------------------------")
+        send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"\n\n\n-------------------------------------------------")
         clear_console()  
         current_block_number = await client.get_block_number()   # get the current block number
 
@@ -433,6 +471,7 @@ async def main():
             
             if (current_saved_game_id == -1):
                 send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"No game found. Waiting for the next check interval...")
+                
                 await asyncio.sleep(LOOP_SECONDS_INTERVAL)
                 continue
 
@@ -460,14 +499,25 @@ async def main():
                       if len(unverifiedOutposts) == 0:
                             print("all outposts verified") 
                             send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"All outposts have been verified. Creating a new event...")
+                            send_webhook(webhook_url=DISCORD_CHANNEL_WEBHOOK, content="All outposts have been verified. Creating a new event...", title="All outposts verified", color=0x00FF00)
                             await call_create_event_func(account, current_saved_game_id)
                             await asyncio.sleep(LOOP_SECONDS_INTERVAL)
                             continue
                       else:
                             print("Not all outposts have been verified yet.")
+
+                            missing_outposts_message = "All outposts have not been verified. Missing outposts:\n"
+                            for outpost in unverifiedOutposts:
+                                outpost_id = 1
+                                outpost_position = outpost["position"]
+                                missing_outposts_message += f"Outpost ID: {outpost_id}, Position: {outpost_position}\n"
+
+                            send_webhook(webhook_url=DISCORD_CHANNEL_WEBHOOK, content="All outposts have not been verified. Missing outposts:", title="Not all outposts verified", description=missing_outposts_message, color=0xFF0000)
+
                             send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"Not all outposts have been verified yet. Waiting for the next check interval...")
                             await asyncio.sleep(LOOP_SECONDS_INTERVAL)
                             continue
+                      
                       
                 else: # no event so we make a new one 
                     print("No current world event found. Creating a new one...")
