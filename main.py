@@ -20,20 +20,26 @@ TORII_URL = 'http://localhost:8080/graphql'
 
 DISCORD_CHANNEL_WEBHOOK = 'https://discord.com/api/webhooks/1218511459714207784/xqsESHV8WNeU_l4gm2wevj3h1kclNUWxpU1jPIBSZIn47f-bTUURoCwypzrtLw0FHSGh'
 
-BLOCK_CHECK_INTERVAL = 2  
-LOOP_SECONDS_INTERVAL = 10
+BLOCK_CHECK_INTERVAL = 1
+LOOP_SECONDS_INTERVAL = 20
 
 
 
-# call to create event
+
+# this will crash if the game is over
 async def call_create_event_func(account, gameid):
-    print("Calling the create event function function...")
-    call = Call(
-        to_addr=CONTRACT_ADDRESS, selector=get_selector_from_name(FUNCTION_NAME), calldata=[gameid]
-    )
-    resp = await account.execute(calls=[call], max_fee=int(1e16))
-    await account.client.wait_for_tx(resp.transaction_hash)
-    print("Function called successfully.")
+    try:
+        print("Calling the create event function...")
+        call = Call(
+            to_addr=CONTRACT_ADDRESS, 
+            selector=get_selector_from_name(FUNCTION_NAME), 
+            calldata=[gameid]
+        )
+        resp = await account.execute(calls=[call], max_fee=int(1e16))
+        await account.client.wait_for_tx(resp.transaction_hash)
+        print("Function called successfully.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 def make_graphql_request(query):
     response = requests.post(url=TORII_URL, json={"query": query})
@@ -229,6 +235,10 @@ def fetch_all_outpost_hit_by_current_event(event, outposts) -> []:
     event_radius = event["radius"]
     
     for outpost in outposts:
+
+        if (outpost["life"] == 0):
+            continue
+
         outpost_x = outpost["position"]["x"]
         outpost_y = outpost["position"]["y"]
         
@@ -478,11 +488,11 @@ async def main():
             if (current_block_number >= start_of_play_phase):
                 print("we are in the play phase")
 
-                if (len(saved_outposts_for_this_game) == 0):
-                    print("Fetching outposts as the arr was empty")
-                    send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"Fetching outposts for game_id: {current_saved_game_id}...")
-                    saved_outposts_for_this_game = fetch_outposts(current_saved_game_id)
-                    print(f"Outposts fetched successfully. Total of {len(saved_outposts_for_this_game)} outposts found.")
+                # if (len(saved_outposts_for_this_game) == 0):
+                # print("Fetching outposts as the arr was empty")
+                send_discord_message(DISCORD_CHANNEL_WEBHOOK, f"Fetching outposts for game_id: {current_saved_game_id}...")
+                saved_outposts_for_this_game = fetch_outposts(current_saved_game_id)
+                print(f"Outposts fetched successfully. Total of {len(saved_outposts_for_this_game)} outposts found.")
                 
                 current_world_event = fetch_current_world_events(current_saved_game_id)
 
