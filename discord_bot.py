@@ -1,7 +1,6 @@
 
 # TORII_URL = 'https://api.cartridge.gg/x/rr/torii/graphql'
 
-
 import discord
 from discord import app_commands
 from typing import Optional
@@ -10,6 +9,7 @@ from queries import fetch_outposts, fetch_unverified_outposts, fetch_latest_game
 from queries import Vec2, Outpost, GamePhaseInfo, EventDetails, Contribution, OutpostTrade, ReinforcementTrade, GamePotInfo, GameState, NODE_URL, TORII_URL
 from starknet_py.net.full_node_client import FullNodeClient
 
+import random
 
 def format_string(s, n):
     # If the string is short enough, just return it as is
@@ -45,7 +45,7 @@ async def on_ready():
 @tree.command()
 @app_commands.describe(address='Address', game_id='Optional: Game Number')
 async def player_info(interaction: discord.Interaction, address: str, game_id: Optional[str] = None):
-
+    """Is this an explanation of the command?"""
     query_game_id = await get_query_game_id(game_id)
 
     if query_game_id == -1:
@@ -78,7 +78,7 @@ async def player_info(interaction: discord.Interaction, address: str, game_id: O
 @tree.command()
 @app_commands.describe(game_id='Optional: Game number')
 async def game_info(interaction: discord.Interaction, game_id: Optional[str] = None):
-
+    """Is this an explanation of the command?"""
     query_game_id = await get_query_game_id(game_id)
 
     if query_game_id == -1:
@@ -124,7 +124,7 @@ async def game_info(interaction: discord.Interaction, game_id: Optional[str] = N
 @tree.command()
 @app_commands.describe(event_id='Optional: Event number', game_id='Optional: Game number')
 async def event_data(interaction: discord.Interaction, event_id: Optional[str] = None, game_id: Optional[str] = None):
-
+    """Is this an explanation of the command?"""
     query_game_id = await get_query_game_id(game_id)
 
     if query_game_id == -1:
@@ -178,12 +178,11 @@ async def event_data(interaction: discord.Interaction, event_id: Optional[str] =
 
     await interaction.response.send_message(embed=embed)
     
-
 # works
 @tree.command()
-@app_commands.describe( game_id='Optional: Game number', address='Optional: Address')
+@app_commands.describe( game_id='Optional: Id of the number to look up (if left blank will fetch the most current)', address='Optional: Address of the user to look up')
 async def contribution_leaderboard(interaction: discord.Interaction, game_id: Optional[str] = None, address: Optional[str] = None):
-
+    """Is this an explanation of the command?"""
     query_game_id = await get_query_game_id(game_id)
 
     if query_game_id == -1:
@@ -216,7 +215,6 @@ async def contribution_leaderboard(interaction: discord.Interaction, game_id: Op
 
     await interaction.response.send_message(embed=embed)
 
-
 # works
 @tree.command()
 @app_commands.describe(game_id='Optional: Game number')
@@ -236,6 +234,26 @@ async def jackpot_info(interaction: discord.Interaction, game_id: Optional[str] 
 
     await interaction.response.send_message(embed=embed)    
 
+
+@tree.command()
+@app_commands.rename(left='leftvar')
+async def adding(ctx, left: int, right: int):
+    """this should be adding two numbers togteher also this is an emoji 🤔"""
+    await ctx.send(left + right)
+
+
+@tree.command(description='multichoice')
+@app_commands.describe(choices='Choose one of the options')
+@app_commands.rename(choices='this_function_is_also_renamed')
+@app_commands.choices(choices=[
+    app_commands.Choice(name='Option 1', value='option1'),
+    app_commands.Choice(name='Option 2', value='option2'),
+    app_commands.Choice(name='Option 3', value='option3'),
+])
+async def choose(interaction: discord.Interaction, choices: str):
+    """Chooses between multiple choices."""
+    await interaction.response.send_message(f'You chose: {choices}')
+
 async def get_query_game_id(game_id):
     if game_id is None:
         return await fetch_latest_game_number()
@@ -248,3 +266,5 @@ async def on_ready():
     print("Ready!")
 
 client.run(BOT_TOKEN)
+
+#https://github.com/Rapptz/discord.py/blob/master/examples/basic_bot.py

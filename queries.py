@@ -7,9 +7,12 @@ import asyncio
 import math
 
 # TORII_URL = 'http://localhost:8080/graphql'
-TORII_URL = 'https://api.cartridge.gg/x/rr/torii/graphql'
+# TORII_URL = 'https://api.cartridge.gg/x/rr/torii/graphql'
 
-NODE_URL = "http://localhost:5050"
+# NODE_URL = "http://localhost:5050"
+
+TORII_URL = 'https://api.cartridge.gg/x/sepoliarr/torii/graphql'
+NODE_URL = "https://starknet-sepolia.public.blastapi.io/rpc/v0_6"
 
 @dataclass
 class Vec2:
@@ -136,6 +139,7 @@ async def fetch_unverified_outposts(event_id: EventDetails, hit_outposts: List[V
         return []
 
 async def fetch_outposts(game_id: str, address: str = "", type: str = "") -> (list, int):
+
     where_clause = f'game_id: "{game_id}"' + (f', owner: "{address}"' if address else "") + (f', reinforcement_type: "{type}"' if type else "")
     
     query = f"""
@@ -226,10 +230,13 @@ async def fetch_game_phase_info(game_id: str) -> Optional[GamePhaseInfo]:
                 if model.get("__typename") == "GamePhases":
                     game_phase_info = GamePhaseInfo(
                         model.get("status"),
-                        model.get("preparation_block_number"),
+                        hex_to_number(model.get("preparation_block_number"), add_decimals=False),
                         hex_to_number(model.get("game_id"), add_decimals=False),
-                        model.get("play_block_number")
+                        hex_to_number(model.get("play_block_number"), add_decimals=False)
                     )
+
+                    print(f"Game Phase Info: {game_phase_info}")  # Debug
+
                     return game_phase_info
         
         return None  
@@ -727,146 +734,146 @@ def fetch_all_outpost_hit_by_current_event(event: EventDetails, outposts: list[O
 
 
 
-async def test_each_query():
+# async def test_each_query():
 
-    game_id = "0"
-    data = await fetch_game_state(game_id)
-    print("\n\nGame State: ")
-    print(data)
+#     game_id = "0"
+#     data = await fetch_game_state(game_id)
+#     print("\n\nGame State: ")
+#     print(data)
     
 
 
 
-    outposts = await fetch_outposts(game_id)
-    print("Outposts: ")
-    print(outposts[0])
-    print(f"Total Count: {outposts[1]}")
+#     outposts = await fetch_outposts(game_id)
+#     print("Outposts: ")
+#     print(outposts[0])
+#     print(f"Total Count: {outposts[1]}")
 
-    # Test fetch_outposts_of
-    address = "0x00d31ff85db0d9e46f1f14551b501ef3c2e689763befedae94d69dd0f83b7e57"
-    outposts = await fetch_outposts(game_id, address)
-    print(f"\n\nOutposts of {address}: ")
-    print(outposts[0])
-    print(f"Total Count: {outposts[1]}")
+#     # Test fetch_outposts_of
+#     address = "0x00d31ff85db0d9e46f1f14551b501ef3c2e689763befedae94d69dd0f83b7e57"
+#     outposts = await fetch_outposts(game_id, address)
+#     print(f"\n\nOutposts of {address}: ")
+#     print(outposts[0])
+#     print(f"Total Count: {outposts[1]}")
 
-    # test fetch_contribution_sorted
-    contributions, total_count = await fetch_contribution_sorted(game_id, address)
-    print(f"\n\nContributions of {address}: ")
-    print(contributions)
+#     # test fetch_contribution_sorted
+#     contributions, total_count = await fetch_contribution_sorted(game_id, address)
+#     print(f"\n\nContributions of {address}: ")
+#     print(contributions)
 
-    # test full contribution
-    contributions, total_count = await fetch_contribution_sorted(game_id)
-    print(f"\n\nfull Contributions of: ")
-    print(contributions)
+#     # test full contribution
+#     contributions, total_count = await fetch_contribution_sorted(game_id)
+#     print(f"\n\nfull Contributions of: ")
+#     print(contributions)
 
-    # # Test fetch_outposts_of_type
-    # type = "None"
-    # outposts = await fetch_outposts(game_id, type=type)
-    # print("\n\nOutposts of type None: ")
-    # print(outposts[0])
-    # print(f"Total Count: {outposts[1]}")
+#     # # Test fetch_outposts_of_type
+#     # type = "None"
+#     # outposts = await fetch_outposts(game_id, type=type)
+#     # print("\n\nOutposts of type None: ")
+#     # print(outposts[0])
+#     # print(f"Total Count: {outposts[1]}")
 
-    # type = "Wall"
-    # outposts = await fetch_outposts(game_id, type=type)
-    # print("\n\nOutposts of type Wall: ")
-    # print(outposts[0])
-    # print(f"Total Count: {outposts[1]}")
+#     # type = "Wall"
+#     # outposts = await fetch_outposts(game_id, type=type)
+#     # print("\n\nOutposts of type Wall: ")
+#     # print(outposts[0])
+#     # print(f"Total Count: {outposts[1]}")
 
-    # type = "Trench"
-    # outposts = await fetch_outposts(game_id, type=type)
-    # print("\n\nOutposts of type trench: ")
-    # print(outposts[0])
-    # print(f"Total Count: {outposts[1]}")
+#     # type = "Trench"
+#     # outposts = await fetch_outposts(game_id, type=type)
+#     # print("\n\nOutposts of type trench: ")
+#     # print(outposts[0])
+#     # print(f"Total Count: {outposts[1]}")
 
-    # # Test fetch_outposts_of_type
-    # type = "Bunker"
-    # outposts = await fetch_outposts(game_id, type=type)
-    # print("\n\nOutposts of type Bunker: ")
-    # print(outposts[0])
-    # print(f"Total Count: {outposts[1]}")
+#     # # Test fetch_outposts_of_type
+#     # type = "Bunker"
+#     # outposts = await fetch_outposts(game_id, type=type)
+#     # print("\n\nOutposts of type Bunker: ")
+#     # print(outposts[0])
+#     # print(f"Total Count: {outposts[1]}")
 
-    # Test fetch_latest_game_phase_info
-    game_phase_info = await fetch_game_phase_info(game_id)
-    print("\n\nGame Phase Info: ")
-    print(game_phase_info)
+#     # Test fetch_latest_game_phase_info
+#     game_phase_info = await fetch_game_phase_info(game_id)
+#     print("\n\nGame Phase Info: ")
+#     print(game_phase_info)
 
-    # Test fetch_latest_game_pot_info
-    game_pot_info = await fetch_game_pot_info(game_id)
-    print("\n\nGame Pot Info: ")
-    print(game_pot_info)
+#     # Test fetch_latest_game_pot_info
+#     game_pot_info = await fetch_game_pot_info(game_id)
+#     print("\n\nGame Pot Info: ")
+#     print(game_pot_info)
 
-    # Test fetch_current_world_event
-    event_details = await fetch_current_world_event(game_id)
-    print("\n\nEvent Details: ")
-    print(event_details)
+#     # Test fetch_current_world_event
+#     event_details = await fetch_current_world_event(game_id)
+#     print("\n\nEvent Details: ")
+#     print(event_details)
 
-    # Test fetch_latest_game_number
-    latest_game_number = await fetch_latest_game_number()
-    print("\n\nLatest Game Number: ")
-    print(latest_game_number)
+#     # Test fetch_latest_game_number
+#     latest_game_number = await fetch_latest_game_number()
+#     print("\n\nLatest Game Number: ")
+#     print(latest_game_number)
 
-    # Test fetch_unverified_outposts
-    hit_outposts = fetch_all_outpost_hit_by_current_event(event_details, outposts[0])
-    print(f"\n\nHit Outposts: ")
-    print(hit_outposts)
-    unverified_outposts = await fetch_unverified_outposts(event_details, hit_outposts, game_id)
-    print("\n\nUnverified Outposts: ")
-    print(unverified_outposts)
+#     # Test fetch_unverified_outposts
+#     hit_outposts = fetch_all_outpost_hit_by_current_event(event_details, outposts[0])
+#     print(f"\n\nHit Outposts: ")
+#     print(hit_outposts)
+#     unverified_outposts = await fetch_unverified_outposts(event_details, hit_outposts, game_id)
+#     print("\n\nUnverified Outposts: ")
+#     print(unverified_outposts)
 
-    # Test fetch_latest_world_event_info
-    number = 0
-    world_event_info = await fetch_world_event_info(game_id, number)
-    print(f"\n\nWorld Event Info {number}: ")
-    print(world_event_info)
+#     # Test fetch_latest_world_event_info
+#     number = 0
+#     world_event_info = await fetch_world_event_info(game_id, number)
+#     print(f"\n\nWorld Event Info {number}: ")
+#     print(world_event_info)
 
-    # Test fetch_outpost_trades
-    status = 1
-    trades, total_count = await fetch_outpost_trades(game_id,status= status)
-    print("\n\nOutpost Trades selling: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
+#     # Test fetch_outpost_trades
+#     status = 1
+#     trades, total_count = await fetch_outpost_trades(game_id,status= status)
+#     print("\n\nOutpost Trades selling: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
-    status = 2
-    trades, total_count = await fetch_outpost_trades(game_id,status= status)
-    print("\n\nOutpost Trades sold: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
+#     status = 2
+#     trades, total_count = await fetch_outpost_trades(game_id,status= status)
+#     print("\n\nOutpost Trades sold: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
-    status = 3
-    trades, total_count = await fetch_outpost_trades(game_id,status= status)
-    print("\n\nOutpost Trades revoked: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
+#     status = 3
+#     trades, total_count = await fetch_outpost_trades(game_id,status= status)
+#     print("\n\nOutpost Trades revoked: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
-    # Test fetch_reinforcement_trades
-    status = 1
-    trades, total_count = await fetch_reinforcement_trades(game_id, status=status)
-    print("\n\nReinforcement Trades selling: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
+#     # Test fetch_reinforcement_trades
+#     status = 1
+#     trades, total_count = await fetch_reinforcement_trades(game_id, status=status)
+#     print("\n\nReinforcement Trades selling: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
-    status = 2
-    trades, total_count = await fetch_reinforcement_trades(game_id, status=status)
-    print("\n\nReinforcement Trades sold: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
+#     status = 2
+#     trades, total_count = await fetch_reinforcement_trades(game_id, status=status)
+#     print("\n\nReinforcement Trades sold: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
-    status = 3
-    trades, total_count = await fetch_reinforcement_trades(game_id, status= status)
-    print("\n\nReinforcement Trades revoked: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
+#     status = 3
+#     trades, total_count = await fetch_reinforcement_trades(game_id, status= status)
+#     print("\n\nReinforcement Trades revoked: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
-    # Test fetch_reinforcement_trades_specific_seller
-    status = 1
-    trades, total_count = await fetch_reinforcement_trades(game_id,seller= address,status= status)
-    print(f"\n\nReinforcement Trades from {address} status active: ")
-    print(trades)
-    print(f"Total Count: {total_count}")
-
-
+#     # Test fetch_reinforcement_trades_specific_seller
+#     status = 1
+#     trades, total_count = await fetch_reinforcement_trades(game_id,seller= address,status= status)
+#     print(f"\n\nReinforcement Trades from {address} status active: ")
+#     print(trades)
+#     print(f"Total Count: {total_count}")
 
 
 
-# Run the test_each_query function
-asyncio.run(test_each_query())
+
+
+# # Run the test_each_query function
+# asyncio.run(test_each_query())
